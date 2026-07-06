@@ -1,14 +1,12 @@
 import React from 'react'
 import {notFound} from "next/navigation";
 import {IEvent} from "@/database";
-import {events as mockEvents, EventItem} from "@/lib/constants";
-import {getSimilarEventsBySlug} from "@/lib/actions/event.actions";
+import {EventItem} from "@/lib/constants";
+import {getSimilarEventsBySlug, getEventBySlug} from "@/lib/actions/event.actions";
 import Image from "next/image";
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
-import {cacheLife} from "next/cache";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+import {cacheLife, cacheTag} from "next/cache";
 
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; label: string; }) => (
@@ -41,23 +39,9 @@ const EventDetails = async ({ params }: { params: Promise<string> }) => {
     'use cache'
     cacheLife('hours');
     const slug = await params;
+    cacheTag(`event-${slug}`);
 
-    let event = null;
-    try {
-        const response = await fetch(`${BASE_URL}/api/events/${slug}`, {
-            next: { revalidate: 60 }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            event = data.event;
-        }
-    } catch (error) {
-        console.warn(`Failed to fetch event ${slug} from API, falling back to mock events:`, error);
-    }
-
-    if (!event) {
-        event = mockEvents.find((e) => e.slug === slug) || null;
-    }
+    const event = await getEventBySlug(slug);
 
     if (!event) {
         return notFound();

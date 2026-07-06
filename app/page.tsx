@@ -1,29 +1,16 @@
 import ExploreBtn from "@/components/ExploreBtn";
 import EventCard from "@/components/EventCard";
 import {IEvent} from "@/database";
-import {events as mockEvents, EventItem} from "@/lib/constants";
-import {cacheLife} from "next/cache";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+import {EventItem} from "@/lib/constants";
+import {cacheLife, cacheTag} from "next/cache";
+import { getAllEvents } from "@/lib/actions/event.actions";
 
 const Page = async () => {
     'use cache';
-    cacheLife('hours')
+    cacheLife('hours');
+    cacheTag('events-list');
     
-    let events: (IEvent | EventItem)[] = [];
-    try {
-        const response = await fetch(`${BASE_URL}/api/events`);
-        if (response.ok) {
-            const data = await response.json();
-            events = data.events || [];
-        }
-    } catch (error) {
-        console.warn("Failed to fetch events from API, falling back to mock events:", error);
-    }
-
-    if (!events || events.length === 0) {
-        events = mockEvents;
-    }
+    const events = await getAllEvents();
 
     return (
         <section>

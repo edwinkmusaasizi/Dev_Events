@@ -3,6 +3,7 @@ import { v2 as cloudinary } from 'cloudinary';
 
 import connectDB from "@/lib/mongodb";
 import Event from '@/database/event.model';
+import { revalidateTag, revalidatePath } from 'next/cache';
 
 export async function POST(req: NextRequest) {
     try {
@@ -43,6 +44,10 @@ export async function POST(req: NextRequest) {
             tags: tags,
             agenda: agenda,
         });
+
+        // Invalidate cached lists to reflect the new event immediately
+        revalidateTag('events-list');
+        revalidatePath('/');
 
         return NextResponse.json({ message: 'Event created successfully', event: createdEvent }, { status: 201 });
     } catch (e) {
