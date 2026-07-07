@@ -5,6 +5,8 @@ import {getSimilarEventsBySlug, getEventBySlug} from "@/lib/actions/event.action
 import Image from "next/image";
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
+import DeleteEvent from "@/components/DeleteEvent";
+import { auth } from "@/auth";
 
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; label: string; }) => (
@@ -45,6 +47,10 @@ const EventDetails = async ({ slug }: { slug: string }) => {
     if(!description) return notFound();
 
     const bookings = 10;
+
+    // Determine whether the current viewer owns this event (controls the delete action)
+    const session = await auth();
+    const isOwner = Boolean(session?.user?.id && session.user.id === event.creatorId);
 
     const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
 
@@ -99,6 +105,14 @@ const EventDetails = async ({ slug }: { slug: string }) => {
 
                         <BookEvent eventId={event._id} slug={event.slug} />
                     </div>
+
+                    {isOwner && (
+                        <div className="signup-card">
+                            <h2>Manage Event</h2>
+                            <p className="text-sm">You created this event.</p>
+                            <DeleteEvent slug={event.slug} />
+                        </div>
+                    )}
                 </aside>
             </div>
 

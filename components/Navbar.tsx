@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import AuthButtons from "@/components/AuthButtons";
 
 const Navbar = () => {
     return (
@@ -15,6 +16,7 @@ const Navbar = () => {
                     <li><Link href="/">Home</Link></li>
                     <li><Link href="/#events">Events</Link></li>
                     <li><Link href="/events/create">Create Event</Link></li>
+                    <AuthButtons />
                 </ul>
             </nav>
         </header>

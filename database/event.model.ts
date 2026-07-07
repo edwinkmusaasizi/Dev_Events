@@ -7,6 +7,8 @@ export interface IEvent extends Document {
   description: string;
   overview: string;
   image: string;
+  imagePublicId?: string;
+  creatorId: string;
   venue: string;
   location: string;
   date: string;
@@ -50,6 +52,15 @@ const EventSchema = new Schema<IEvent>(
       type: String,
       required: [true, 'Image URL is required'],
       trim: true,
+    },
+    imagePublicId: {
+      type: String,
+      trim: true,
+    },
+    creatorId: {
+      type: String,
+      required: [true, 'Creator is required'],
+      index: true,
     },
     venue: {
       type: String,

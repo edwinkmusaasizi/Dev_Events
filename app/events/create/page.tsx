@@ -1,13 +1,29 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Loader2, Plus, X, UploadCloud, AlertCircle } from 'lucide-react';
 
 const CreateEventPage = () => {
+    const { data: session, status } = useSession();
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (status === 'unauthenticated') {
+            router.push('/');
+        }
+    }, [status, router]);
+
+    if (status === 'loading') {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     // Form fields
     const [title, setTitle] = useState('');

@@ -4,9 +4,16 @@ import { v2 as cloudinary } from 'cloudinary';
 import connectDB from "@/lib/mongodb";
 import Event from '@/database/event.model';
 import { revalidateTag, revalidatePath } from 'next/cache';
+import { auth } from '@/auth';
 
 export async function POST(req: NextRequest) {
     try {
+        // Require an authenticated user before allowing event creation
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
         await connectDB();
 
         const formData = await req.formData();
@@ -37,12 +44,15 @@ export async function POST(req: NextRequest) {
                 resolve(results);
             }).end(buffer);
         });
-        const imageUrl = (uploadResult as { secure_url: string }).secure_url;
+        const { secure_url: imageUrl, public_id: imagePublicId } =
+            uploadResult as { secure_url: string; public_id: string };
 
         event.image = imageUrl;
 
         const createdEvent = await Event.create({
             ...event,
+            imagePublicId,
+            creatorId: session.user.id, // set server-side; never trust the request body
             tags: tags,
             agenda: agenda,
         });
