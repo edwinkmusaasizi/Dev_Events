@@ -23,7 +23,7 @@ const AuthButtons = () => {
     return (
         <li>
             <button type="button" onClick={() => signIn('google')}>
-                Sign in with Google
+                Login
             </button>
         </li>
     );
