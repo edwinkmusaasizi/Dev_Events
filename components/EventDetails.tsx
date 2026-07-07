@@ -1,12 +1,10 @@
 import React from 'react'
 import {notFound} from "next/navigation";
 import {IEvent} from "@/database";
-import {EventItem} from "@/lib/constants";
 import {getSimilarEventsBySlug, getEventBySlug} from "@/lib/actions/event.actions";
 import Image from "next/image";
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
-import {cacheLife, cacheTag} from "next/cache";
 
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; label: string; }) => (
@@ -35,12 +33,7 @@ const EventTags = ({ tags }: { tags: string[] }) => (
     </div>
 )
 
-const EventDetails = async ({ params }: { params: Promise<string> }) => {
-    'use cache'
-    cacheLife('hours');
-    const slug = await params;
-    cacheTag(`event-${slug}`);
-
+const EventDetails = async ({ slug }: { slug: string }) => {
     const event = await getEventBySlug(slug);
 
     if (!event) {
@@ -53,13 +46,13 @@ const EventDetails = async ({ params }: { params: Promise<string> }) => {
 
     const bookings = 10;
 
-    const similarEvents: (IEvent | EventItem)[] = await getSimilarEventsBySlug(slug);
+    const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
 
     return (
         <section id="event">
             <div className="header">
-                <h1>Event Description</h1>
-                <p>{description}</p>
+                <h1 className="text-gradient">{event.title}</h1>
+                <p className="text-light-100">{description}</p>
             </div>
 
             <div className="details">
@@ -112,7 +105,7 @@ const EventDetails = async ({ params }: { params: Promise<string> }) => {
             <div className="flex w-full flex-col gap-4 pt-20">
                 <h2>Similar Events</h2>
                 <div className="events">
-                    {similarEvents.length > 0 && similarEvents.map((similarEvent: IEvent | EventItem) => (
+                    {similarEvents.length > 0 && similarEvents.map((similarEvent: IEvent) => (
                         <EventCard key={similarEvent.title} {...similarEvent} />
                     ))}
                 </div>

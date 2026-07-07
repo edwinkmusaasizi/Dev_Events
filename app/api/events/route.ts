@@ -7,11 +7,7 @@ import { revalidateTag, revalidatePath } from 'next/cache';
 
 export async function POST(req: NextRequest) {
     try {
-        try {
-            await connectDB();
-        } catch (dbConnError) {
-            console.warn('Database connection failed in POST route, proceeding in simulated demo mode:', dbConnError);
-        }
+        await connectDB();
 
         const formData = await req.formData();
 
@@ -21,7 +17,7 @@ export async function POST(req: NextRequest) {
         try {
             event = Object.fromEntries(formData.entries());
         } catch {
-            return NextResponse.json({ message: 'Invalid JSON data format'}, { status: 400 })
+            return NextResponse.json({ message: 'Invalid form data format'}, { status: 400 })
         }
 
         const file = formData.get('image') as File;
@@ -34,43 +30,22 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        let imageUrl = '';
-        try {
-            const uploadResult = await new Promise((resolve, reject) => {
-                cloudinary.uploader.upload_stream({ resource_type: 'image', folder: 'DevEvent' }, (error, results) => {
-                    if(error) return reject(error);
+        const uploadResult = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream({ resource_type: 'image', folder: 'DevEvent' }, (error, results) => {
+                if(error) return reject(error);
 
-                    resolve(results);
-                }).end(buffer);
-            });
-            imageUrl = (uploadResult as { secure_url: string }).secure_url;
-        } catch (cloudinaryError) {
-            console.warn('Cloudinary upload failed, using local fallback preview image URL for demo mode:', cloudinaryError);
-            imageUrl = '/images/event-full.png'; // Fallback preview
-        }
+                resolve(results);
+            }).end(buffer);
+        });
+        const imageUrl = (uploadResult as { secure_url: string }).secure_url;
 
         event.image = imageUrl;
 
-        let createdEvent;
-        try {
-            createdEvent = await Event.create({
-                ...event,
-                tags: tags,
-                agenda: agenda,
-            });
-        } catch (dbError) {
-            console.warn('Database insert failed, simulating successful creation response for demo mode:', dbError);
-            // Simulate creation response
-            createdEvent = {
-                ...event,
-                tags: tags,
-                agenda: agenda,
-                slug: event.title ? event.title.toLowerCase().replace(/\s+/g, '-') : 'demo-event',
-                _id: 'demo_' + Date.now(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
-        }
+        const createdEvent = await Event.create({
+            ...event,
+            tags: tags,
+            agenda: agenda,
+        });
 
         // Invalidate cached lists to reflect the new event immediately
         revalidateTag('events-list');
@@ -78,8 +53,11 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ message: 'Event created successfully', event: createdEvent }, { status: 201 });
     } catch (e) {
-        console.error('Core event creation process failed:', e);
-        return NextResponse.json({ message: 'Event Creation Failed', error: e instanceof Error ? e.message : 'Unknown'}, { status: 500 })
+        console.error('Event creation process failed:', e);
+        return NextResponse.json({ 
+            message: 'Event Creation Failed', 
+            error: e instanceof Error ? e.message : 'Unknown error occurred'
+        }, { status: 500 })
     }
 }
 

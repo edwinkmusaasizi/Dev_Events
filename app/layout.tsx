@@ -3,6 +3,8 @@ import { Schibsted_Grotesk, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import LightRays from "@/components/LightRays";
 import Navbar from "@/components/Navbar";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import { Suspense } from "react";
 import { PostHogProvider } from "./providers";
 
 const schibstedGrotesk = Schibsted_Grotesk({
@@ -48,6 +50,9 @@ export default function RootLayout({
           </div>
 
           <main>
+            <Suspense fallback={null}>
+              <Breadcrumbs />
+            </Suspense>
             {children}
           </main>
       </PostHogProvider>

@@ -2,53 +2,68 @@
 
 import Event from '@/database/event.model';
 import connectDB from "@/lib/mongodb";
-import { events as mockEvents } from "@/lib/constants";
+import { cacheTag } from 'next/cache';
 
 export const getSimilarEventsBySlug = async (slug: string) => {
+    'use cache'
+    cacheTag(`similar-events-${slug}`)
     try {
         await connectDB();
         const event = await Event.findOne({ slug });
-        if (!event) {
-            const mockEvent = mockEvents.find(e => e.slug === slug);
-            if (!mockEvent) return [];
-            const similar = mockEvents.filter(e => e.slug !== slug && e.tags.some(t => mockEvent.tags.includes(t)));
-            return similar;
-        }
+        if (!event) return [];
 
         const similar = await Event.find({ _id: { $ne: event._id }, tags: { $in: event.tags } }).lean();
         return JSON.parse(JSON.stringify(similar));
-    } catch {
-        const mockEvent = mockEvents.find(e => e.slug === slug);
-        if (!mockEvent) return [];
-        const similar = mockEvents.filter(e => e.slug !== slug && e.tags.some(t => mockEvent.tags.includes(t)));
-        return similar;
+    } catch (error) {
+        console.error(`Failed to fetch similar events for slug '${slug}':`, error);
+        return [];
     }
 }
 
-export const getAllEvents = async () => {
+export const getAllEvents = async (query?: string, tag?: string) => {
+    'use cache'
+    cacheTag('events-list')
     try {
         await connectDB();
-        const events = await Event.find().sort({ createdAt: -1 }).lean();
-        if (events.length > 0) {
-            return JSON.parse(JSON.stringify(events));
+
+        const filter: any = {};
+        if (query) {
+            filter.title = { $regex: query, $options: 'i' };
         }
-        return mockEvents;
+        if (tag && tag !== 'All') {
+            filter.tags = { $in: [tag.toLowerCase()] };
+        }
+
+        const events = await Event.find(filter).sort({ createdAt: -1 }).lean();
+        return JSON.parse(JSON.stringify(events));
     } catch (error) {
-        console.warn('Database connection failed. Falling back to static mockEvents.', error instanceof Error ? error.message : error);
-        return mockEvents;
+        console.error('Database connection failed while fetching all events:', error);
+        return [];
+    }
+}
+
+export const getAllTags = async () => {
+    'use cache'
+    cacheTag('tags-list')
+    try {
+        await connectDB();
+        const tags = await Event.distinct('tags');
+        return tags;
+    } catch (error) {
+        console.error('Failed to fetch tags:', error);
+        return [];
     }
 }
 
 export const getEventBySlug = async (slug: string) => {
+    'use cache'
+    cacheTag(`event-${slug}`)
     try {
         await connectDB();
         const event = await Event.findOne({ slug }).lean();
-        if (!event) {
-            return mockEvents.find(e => e.slug === slug) || null;
-        }
-        return JSON.parse(JSON.stringify(event));
+        return event ? JSON.parse(JSON.stringify(event)) : null;
     } catch (error) {
-        console.warn(`Database connection failed for slug '${slug}'. Falling back to static mockEvents.`, error instanceof Error ? error.message : error);
-        return mockEvents.find(e => e.slug === slug) || null;
+        console.error(`Database connection failed for slug '${slug}':`, error);
+        return null;
     }
 }

@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Loader2, Plus, X, UploadCloud, AlertCircle } from 'lucide-react';
 
 const CreateEventPage = () => {
     const router = useRouter();
@@ -146,7 +147,8 @@ const CreateEventPage = () => {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-8 bg-[#12121280]/50 backdrop-blur-xl border border-border-dark p-6 sm:p-10 rounded-xl card-shadow">
                 {errorMsg && (
-                    <div className="bg-red-950/40 border border-red-800 text-red-200 rounded-md p-4 text-sm font-medium">
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg p-4 text-sm font-medium flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
                         {errorMsg}
                     </div>
                 )}
@@ -169,12 +171,17 @@ const CreateEventPage = () => {
                                     className="object-cover" 
                                 />
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex-center">
-                                    <p className="text-primary font-semibold">Change Image</p>
+                                    <p className="text-primary font-semibold flex items-center gap-2">
+                                        <UploadCloud className="w-5 h-5" />
+                                        Change Image
+                                    </p>
                                 </div>
                             </div>
                         ) : (
                             <>
-                                <Image src="/icons/logo.png" alt="Upload" width={40} height={40} className="opacity-40 animate-pulse" />
+                                <div className="p-4 rounded-full bg-primary/5 border border-primary/10">
+                                    <UploadCloud className="w-10 h-10 text-primary/40 animate-pulse" />
+                                </div>
                                 <div className="text-center">
                                     <p className="font-semibold text-light-100 text-lg">Click to Upload Cover Image</p>
                                     <p className="text-xs text-light-200 mt-1">Supports JPEG, PNG, WEBP (Recommended aspect ratio 4:3)</p>
@@ -408,13 +415,23 @@ const CreateEventPage = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-4 text-center text-black font-bold rounded-md text-lg transition-colors focus:outline-none ${
+                        className={`w-full py-4 flex items-center justify-center gap-3 text-black font-bold rounded-md text-lg transition-all focus:outline-none ${
                             loading 
                                 ? 'bg-primary/55 cursor-not-allowed text-black/60' 
-                                : 'bg-primary hover:bg-primary/90 cursor-pointer shadow-lg hover:shadow-primary/20'
+                                : 'bg-primary hover:bg-primary/90 cursor-pointer shadow-lg hover:shadow-primary/20 scale-[1.01] active:scale-[0.99]'
                         }`}
                     >
-                        {loading ? 'Uploading Cover Image & Creating Event...' : 'Publish Event'}
+                        {loading ? (
+                            <>
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                                <span>Creating your event...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Plus className="w-6 h-6" />
+                                <span>Publish Event</span>
+                            </>
+                        )}
                     </button>
                 </div>
             </form>

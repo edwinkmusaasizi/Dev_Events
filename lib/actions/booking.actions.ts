@@ -15,11 +15,10 @@ export const createBooking = async ({ eventId, slug, email }: { eventId: string;
 
         return { success: true };
     } catch (error) {
-        console.warn(`Database booking failed for event ${slug}. Simulating successful booking for demo mode:`, error instanceof Error ? error.message : error);
-        
-        // Simulative revalidation for demo mode UI updating
-        revalidateTag(`event-${slug}`);
-        
-        return { success: true };
+        console.error(`Database booking failed for event ${slug}:`, error);
+        return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Booking failed' 
+        };
     }
 }
